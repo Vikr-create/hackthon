@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}My Student Profile | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row g-4">
+    <!-- Left Column: Profile Summary & Completion -->
+    <div class="col-lg-4">
+      <div class="card hub-card p-4 text-center sticky-top" style="top: 85px;">
+        <div class="position-relative d-inline-block mx-auto mb-3">
+          <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center shadow" style="width: 90px; height: 90px; font-size: 2.2rem;">
+            {{ profile.full_name[:1] if profile and profile.full_name else 'S' }}
+          </div>
+        </div>
+        <h4 class="fw-bold mb-1">{{ profile.full_name or 'Your Name' }}</h4>
+        <div class="text-muted small mb-2"><i class="fas fa-envelope me-1"></i>{{ current_user.email }}</div>
+        <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 mb-3">
+          {{ profile.degree or 'Undergraduate' }} &bull; {{ profile.branch or 'Engineering' }}
+        </div>
+
+        <!-- Completion Percentage Meter -->
+        <div class="p-3 bg-light rounded-3 border text-start mb-3">
+          <div class="d-flex justify-content-between small fw-semibold mb-1">
+            <span>Profile Completion</span>
+            <span class="text-primary">{{ completion_percentage }}%</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar {% if completion_percentage >= 80 %}bg-success{% elif completion_percentage >= 50 %}bg-primary{% else %}bg-warning{% endif %}" role="progressbar" style="width: {{ completion_percentage }}%;"></div>
+          </div>
+          <div class="small text-muted mt-2" style="font-size: 0.75rem;">
+            Higher profile completeness powers our rule-based matching engine to recommend the most relevant internships, scholarships, and hackathons!
+          </div>
+        </div>
+
+        <!-- Professional Links Preview -->
+        <div class="d-flex justify-content-center gap-2 mb-3">
+          {% if profile.github %}
+          <a href="{{ profile.github }}" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle" style="width:36px; height:36px;" title="GitHub"><i class="fab fa-github"></i></a>
+          {% endif %}
+          {% if profile.linkedin %}
+          <a href="{{ profile.linkedin }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle" style="width:36px; height:36px;" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          {% endif %}
+          {% if profile.portfolio %}
+          <a href="{{ profile.portfolio }}" target="_blank" class="btn btn-outline-info btn-sm rounded-circle" style="width:36px; height:36px;" title="Portfolio"><i class="fas fa-globe"></i></a>
+          {% endif %}
+          {% if profile.resume_link %}
+          <a href="{{ profile.resume_link }}" target="_blank" class="btn btn-outline-success btn-sm rounded-circle" style="width:36px; height:36px;" title="Resume"><i class="fas fa-file-alt"></i></a>
+          {% endif %}
+        </div>
+
+        <div class="small text-muted border-top pt-3">
+          <i class="fas fa-clock me-1"></i> Last updated: {{ profile.updated_at.strftime('%b %d, %Y') if profile.updated_at else 'Recently' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Profile Edit Form -->
+    <div class="col-lg-8">
+      <div class="card hub-card p-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-user-edit text-primary me-2"></i>Edit Profile Information</h4>
+        <p class="text-muted small mb-4">Keep your academic background, skills, and preferences updated to receive high-precision opportunity matches.</p>
+
+        <form method="POST" action="{{ url_for('student.profile') }}">
+          <!-- Section 1: Basic Information -->
+          <h6 class="fw-bold text-uppercase small text-primary mb-3">1. Personal Information</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="full_name" class="form-label small fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="full_name" name="full_name" value="{{ profile.full_name or '' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="phone" class="form-label small fw-semibold">Phone Number</label>
+              <input type="text" class="form-control" id="phone" name="phone" value="{{ profile.phone or '' }}" placeholder="+91 98765 43210">
+            </div>
+            <div class="col-md-6">
+              <label for="location" class="form-label small fw-semibold">Current City / Location</label>
+              <input type="text" class="form-control" id="location" name="location" value="{{ profile.location or '' }}" placeholder="e.g. Bengaluru, Karnataka">
+            </div>
+            <div class="col-md-6">
+              <label for="work_preference" class="form-label small fw-semibold">Work Preference</label>
+              <select class="form-select" id="work_preference" name="work_preference">
+                <option value="Any" {% if profile.work_preference == 'Any' %}selected{% endif %}>Any (Flexible)</option>
+                <option value="Remote" {% if profile.work_preference == 'Remote' %}selected{% endif %}>Remote Only</option>
+                <option value="Hybrid" {% if profile.work_preference == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+                <option value="On-site" {% if profile.work_preference == 'On-site' %}selected{% endif %}>On-site</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label for="bio" class="form-label small fw-semibold">Short Bio / Career Objective</label>
+              <textarea class="form-control" id="bio" name="bio" rows="2" placeholder="Tell recruiters and teams about your passion and aspirations...">{{ profile.bio or '' }}</textarea>
+            </div>
+          </div>
+
+          <!-- Section 2: Education Information -->
+          <h6 class="fw-bold text-uppercase small text-primary mb-3">2. Education Information</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="college" class="form-label small fw-semibold">College / Institute <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="college" name="college" value="{{ profile.college or '' }}" placeholder="e.g. Indian Institute of Technology">
+            </div>
+            <div class="col-md-6">
+              <label for="university" class="form-label small fw-semibold">Affiliated University</label>
+              <input type="text" class="form-control" id="university" name="university" value="{{ profile.university or '' }}" placeholder="e.g. Mumbai University, VTU, Anna Univ">
+            </div>
+            <div class="col-md-4">
+              <label for="degree" class="form-label small fw-semibold">Degree Program</label>
+              <input type="text" class="form-control" id="degree" name="degree" value="{{ profile.degree or '' }}" placeholder="e.g. B.Tech, B.E., BCA, M.Tech">
+            </div>
+            <div class="col-md-4">
+              <label for="branch" class="form-label small fw-semibold">Branch / Specialization <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="branch" name="branch" value="{{ profile.branch or '' }}" placeholder="e.g. Computer Science, AI/ML, IT, ECE">
+            </div>
+            <div class="col-md-4">
+              <label for="year" class="form-label small fw-semibold">Current Year</label>
+              <select class="form-select" id="year" name="year">
+                <option value="1st Year" {% if profile.year == '1st Year' %}selected{% endif %}>1st Year</option>
+                <option value="2nd Year" {% if profile.year == '2nd Year' %}selected{% endif %}>2nd Year</option>
+                <option value="3rd Year" {% if profile.year == '3rd Year' %}selected{% endif %}>3rd Year</option>
+                <option value="4th Year" {% if profile.year == '4th Year' %}selected{% endif %}>4th Year</option>
+                <option value="Graduate" {% if profile.year == 'Graduate' %}selected{% endif %}>Graduate</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="semester" class="form-label small fw-semibold">Current Semester</label>
+              <input type="number" min="1" max="10" class="form-control" id="semester" name="semester" value="{{ profile.semester or '' }}" placeholder="e.g. 6">
+            </div>
+            <div class="col-md-4">
+              <label for="cgpa" class="form-label small fw-semibold">CGPA / Percentage</label>
+              <input type="number" step="0.01" min="0" max="10" class="form-control" id="cgpa" name="cgpa" value="{{ profile.cgpa or '' }}" placeholder="e.g. 9.15">
+            </div>
+            <div class="col-md-4">
+              <label for="graduation_year" class="form-label small fw-semibold">Graduation Year</label>
+              <input type="number" min="2024" max="2032" class="form-control" id="graduation_year" name="graduation_year" value="{{ profile.graduation_year or '' }}" placeholder="e.g. 2026">
+            </div>
+          </div>
+
+          <!-- Section 3: Skills & Interests -->
+          <h6 class="fw-bold text-uppercase small text-primary mb-3">3. Skills & Career Interests (For AI Matching Engine)</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-12">
+              <label for="skills_input" class="form-label small fw-semibold">
+                Technical Skills (Comma-separated) <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="skills_input" name="skills_input" value="{{ student_skills_str }}" placeholder="Python, React, Machine Learning, Docker, SQL, Git">
+              <div class="small text-muted mt-1">
+                Enter skills separated by commas. These will directly boost your opportunity match scores.
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label for="interests_input" class="form-label small fw-semibold">
+                Interests & Domains (Comma-separated)
+              </label>
+              <input type="text" class="form-control" id="interests_input" name="interests_input" value="{{ student_interests_str }}" placeholder="Artificial Intelligence, Web Development, Cloud Computing, Open Source">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold mb-2">Preferred Opportunity Categories</label>
+              <div class="row g-2">
+                {% for cat in all_categories %}
+                <div class="col-6 col-md-4">
+                  <div class="form-check p-2 bg-light rounded border">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" name="preferred_categories" value="{{ cat.name }}" id="cat_{{ cat.id }}" {% if cat.name in user_preferred_cats %}checked{% endif %}>
+                    <label class="form-check-label small fw-medium" for="cat_{{ cat.id }}">
+                      <i class="{{ cat.icon }} text-muted me-1"></i>{{ cat.name }}
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Professional & Social Links -->
+          <h6 class="fw-bold text-uppercase small text-primary mb-3">4. Links & Experience</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="resume_link" class="form-label small fw-semibold">Resume Link (Google Drive / Dropbox)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-transparent text-muted"><i class="fas fa-file-pdf"></i></span>
+                <input type="url" class="form-control" id="resume_link" name="resume_link" value="{{ profile.resume_link or '' }}" placeholder="https://drive.google.com/...">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="linkedin" class="form-label small fw-semibold">LinkedIn Profile URL</label>
+              <div class="input-group">
+                <span class="input-group-text bg-transparent text-muted"><i class="fab fa-linkedin"></i></span>
+                <input type="url" class="form-control" id="linkedin" name="linkedin" value="{{ profile.linkedin or '' }}" placeholder="https://linkedin.com/in/username">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="github" class="form-label small fw-semibold">GitHub Profile URL</label>
+              <div class="input-group">
+                <span class="input-group-text bg-transparent text-muted"><i class="fab fa-github"></i></span>
+                <input type="url" class="form-control" id="github" name="github" value="{{ profile.github or '' }}" placeholder="https://github.com/username">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="portfolio" class="form-label small fw-semibold">Personal Portfolio Website</label>
+              <div class="input-group">
+                <span class="input-group-text bg-transparent text-muted"><i class="fas fa-globe"></i></span>
+                <input type="url" class="form-control" id="portfolio" name="portfolio" value="{{ profile.portfolio or '' }}" placeholder="https://mywebsite.dev">
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="experience" class="form-label small fw-semibold">Past Experience / Projects Summary</label>
+              <textarea class="form-control" id="experience" name="experience" rows="3" placeholder="Briefly describe key projects, hackathon wins, or past internships...">{{ profile.experience or '' }}</textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 border-top pt-4">
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-5 fw-semibold shadow-sm">
+              <i class="fas fa-save me-1"></i> Save Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

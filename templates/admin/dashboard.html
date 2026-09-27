@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <div class="badge bg-danger px-3 py-1 mb-1">Administrator Control Panel</div>
+      <h3 class="fw-bold mb-0">Platform Overview & Analytics</h3>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.create_opportunity') }}" class="btn btn-primary btn-sm px-3 rounded-pill shadow-sm">
+        <i class="fas fa-plus me-1"></i> Add Opportunity
+      </a>
+      <a href="{{ url_for('admin.reports') }}" class="btn btn-outline-danger btn-sm px-3 rounded-pill position-relative">
+        <i class="fas fa-flag me-1"></i> Reports
+        {% if pending_reports > 0 %}
+        <span class="badge bg-danger ms-1">{{ pending_reports }}</span>
+        {% endif %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Stat Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card hub-card p-3">
+        <span class="text-muted small fw-semibold">Students</span>
+        <h3 class="fw-bold text-primary mb-0">{{ total_students }}</h3>
+        <a href="{{ url_for('admin.students') }}" class="small text-muted mt-2 d-block">Manage &rarr;</a>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card hub-card p-3">
+        <span class="text-muted small fw-semibold">Total Opps</span>
+        <h3 class="fw-bold text-dark mb-0">{{ total_opportunities }}</h3>
+        <a href="{{ url_for('admin.opportunities') }}" class="small text-muted mt-2 d-block">Catalog &rarr;</a>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card hub-card p-3">
+        <span class="text-muted small fw-semibold">Active Opps</span>
+        <h3 class="fw-bold text-success mb-0">{{ active_opportunities }}</h3>
+        <span class="small text-success mt-2 d-block">Published</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card hub-card p-3">
+        <span class="text-muted small fw-semibold">Expired</span>
+        <h3 class="fw-bold text-secondary mb-0">{{ expired_opportunities }}</h3>
+        <span class="small text-muted mt-2 d-block">Past deadline</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card hub-card p-3">
+        <span class="text-muted small fw-semibold">Bookmarks</span>
+        <h3 class="fw-bold text-warning-emphasis mb-0">{{ total_bookmarks }}</h3>
+        <span class="small text-muted mt-2 d-block">Saved count</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card hub-card p-3">
+        <span class="text-muted small fw-semibold">Applications</span>
+        <h3 class="fw-bold text-info mb-0">{{ total_applications }}</h3>
+        <span class="small text-muted mt-2 d-block">Tracked by users</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Charts Row -->
+  <div class="row g-4 mb-4">
+    <!-- Chart 1: Categories -->
+    <div class="col-lg-6">
+      <div class="card hub-card p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="fas fa-chart-pie text-primary me-2"></i>Opportunities by Category</h5>
+        <div style="height: 280px; position: relative;">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Applications Pipeline -->
+    <div class="col-lg-6">
+      <div class="card hub-card p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="fas fa-chart-bar text-success me-2"></i>Applications Status Funnel</h5>
+        <div style="height: 280px; position: relative;">
+          <canvas id="appsChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Opportunities Table -->
+  <div class="card hub-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0"><i class="fas fa-history text-secondary me-2"></i>Recently Added Opportunities</h5>
+      <a href="{{ url_for('admin.opportunities') }}" class="btn btn-outline-primary btn-sm">View All Opps</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small">
+          <tr>
+            <th>Title</th>
+            <th>Organization</th>
+            <th>Category</th>
+            <th>Mode</th>
+            <th>Deadline</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody class="small">
+          {% for opp in recent_opportunities %}
+          <tr>
+            <td class="fw-semibold text-truncate" style="max-width: 250px;">
+              <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="text-dark text-decoration-none">
+                {{ opp.title }}
+              </a>
+              {% if opp.featured %}<span class="badge bg-warning text-dark ms-1">Featured</span>{% endif %}
+            </td>
+            <td>{{ opp.organization }}</td>
+            <td><span class="badge bg-light text-dark border">{{ opp.category }}</span></td>
+            <td>{{ opp.mode }}</td>
+            <td>{{ opp.deadline.strftime('%b %d, %Y') if opp.deadline else 'Rolling' }}</td>
+            <td>
+              <span class="badge {% if opp.status == 'Active' %}bg-success{% elif opp.status == 'Pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                {{ opp.status }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('admin.edit_opportunity', id=opp.id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit">
+                  <i class="fas fa-pencil-alt"></i>
+                </a>
+                <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Preview" target="_blank">
+                  <i class="fas fa-external-link-alt"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 1. Categories Chart
+    const catLabels = {{ categories_chart.labels | tojson }};
+    const catData = {{ categories_chart.data | tojson }};
+
+    const ctxCat = document.getElementById('categoryChart');
+    if (ctxCat) {
+      new Chart(ctxCat, {
+        type: 'doughnut',
+        data: {
+          labels: catLabels,
+          datasets: [{
+            data: catData,
+            backgroundColor: [
+              '#2563eb', '#3b82f6', '#10b981', '#f59e0b',
+              '#ef4444', '#8b5cf6', '#06b6d4', '#64748b',
+              '#ec4899', '#14b8a6', '#f97316', '#a855f7'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right' }
+          }
+        }
+      });
+    }
+
+    // 2. Application Status Funnel Chart
+    const appLabels = {{ apps_chart.labels | tojson }};
+    const appData = {{ apps_chart.data | tojson }};
+
+    const ctxApp = document.getElementById('appsChart');
+    if (ctxApp) {
+      new Chart(ctxApp, {
+        type: 'bar',
+        data: {
+          labels: appLabels,
+          datasets: [{
+            label: 'Applications',
+            data: appData,
+            backgroundColor: '#3b82f6',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

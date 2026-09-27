@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h3 class="fw-bold mb-1"><i class="fas fa-cog text-secondary me-2"></i>Account & Notification Settings</h3>
+      <p class="text-muted small mb-4">Manage your credentials, preferences, and privacy controls.</p>
+
+      <!-- Change Password Card -->
+      <div class="card hub-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-key text-primary me-2"></i>Change Password</h5>
+        <form method="POST" action="{{ url_for('student.settings') }}">
+          <input type="hidden" name="action" value="change_password">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Current Password</label>
+            <input type="password" class="form-control" name="old_password" required placeholder="Enter current password">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">New Password</label>
+              <input type="password" class="form-control" name="new_password" required placeholder="Minimum 6 characters">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Confirm New Password</label>
+              <input type="password" class="form-control" name="confirm_password" required placeholder="Repeat new password">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">
+            Update Password
+          </button>
+        </form>
+      </div>
+
+      <!-- Notification Preferences -->
+      <div class="card hub-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-bell text-warning me-2"></i>Notification Preferences</h5>
+        <form method="POST" action="{{ url_for('student.settings') }}">
+          <input type="hidden" name="action" value="save_preferences">
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="pref1" checked>
+            <label class="form-check-label fw-semibold small" for="pref1">
+              Urgent Deadline Alerts
+            </label>
+            <div class="text-muted small">Notify me when saved opportunities are 2 days from closing.</div>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="pref2" checked>
+            <label class="form-check-label fw-semibold small" for="pref2">
+              High Match Recommendations
+            </label>
+            <div class="text-muted small">Notify me when a new opportunity matches > 90% of my skills.</div>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="pref3" checked>
+            <label class="form-check-label fw-semibold small" for="pref3">
+              Application Tracker Updates
+            </label>
+            <div class="text-muted small">Send summary reports on application stages and milestones.</div>
+          </div>
+          <button type="submit" class="btn btn-outline-primary btn-sm px-4">
+            Save Preferences
+          </button>
+        </form>
+      </div>
+
+      <!-- Account Info -->
+      <div class="card hub-card p-4">
+        <h5 class="fw-bold mb-3 text-muted"><i class="fas fa-shield-alt me-2"></i>Account Metadata</h5>
+        <div class="small text-muted d-flex flex-column gap-2">
+          <div><strong>Registered Email:</strong> {{ current_user.email }}</div>
+          <div><strong>Role:</strong> <span class="badge bg-secondary text-uppercase">{{ current_user.role }}</span></div>
+          <div><strong>Account Created:</strong> {{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else 'N/A' }}</div>
+          <div><strong>Last Active Session:</strong> {{ current_user.last_login.strftime('%B %d, %Y %I:%M %p') if current_user.last_login else 'Active' }}</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

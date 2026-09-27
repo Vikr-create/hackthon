@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}{{ opp.title }} | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('student.opportunities') }}" class="text-decoration-none">Opportunities</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('student.opportunities', category=opp.category) }}" class="text-decoration-none">{{ opp.category }}</a></li>
+      <li class="breadcrumb-item active text-truncate" style="max-width: 300px;" aria-current="page">{{ opp.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Main Left Column -->
+    <div class="col-lg-8">
+      <!-- Opportunity Hero Card -->
+      <div class="card hub-card p-4 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-{{ opp.category | cat_color }}-subtle text-{{ opp.category | cat_color }} badge-category">
+              <i class="{{ opp.category | cat_icon }} me-1"></i>{{ opp.category }}
+            </span>
+            {% if opp.featured %}
+            <span class="badge bg-warning-subtle text-warning-emphasis">
+              <i class="fas fa-star me-1"></i>Featured
+            </span>
+            {% endif %}
+            {% if opp.beginner_friendly %}
+            <span class="badge bg-success-subtle text-success">
+              <i class="fas fa-seedling me-1"></i>Beginner Friendly
+            </span>
+            {% endif %}
+          </div>
+
+          <!-- Deadline badge -->
+          {% if opp.deadline %}
+            {% set days = opp.days_remaining() %}
+            <span class="deadline-badge {% if days < 0 %}deadline-expired{% elif days <= 3 %}deadline-urgent{% elif days <= 14 %}deadline-soon{% else %}deadline-upcoming{% endif %} fs-6 px-3 py-1">
+              <i class="far fa-clock me-1"></i>{{ opp.deadline_badge_text() }} ({{ opp.deadline.strftime('%b %d, %Y') }})
+            </span>
+          {% endif %}
+        </div>
+
+        <h3 class="fw-bold mb-2">{{ opp.title }}</h3>
+        
+        <div class="d-flex align-items-center gap-2 text-muted mb-4">
+          <span class="fw-semibold text-dark"><i class="fas fa-building me-1 text-primary"></i>{{ opp.organization }}</span>
+          {% if opp.verified %}
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Verified Organization">
+            <i class="fas fa-check-circle me-1"></i>Verified
+          </span>
+          {% endif %}
+          <span>&bull;</span>
+          <span><i class="fas fa-map-marker-alt me-1"></i>{{ opp.location }}</span>
+          <span>&bull;</span>
+          <span><i class="fas fa-laptop-house me-1"></i>{{ opp.mode }}</span>
+        </div>
+
+        <!-- Match Score Banner (Rule-Based Recommendation) -->
+        <div class="p-3 rounded-3 mb-4 border" style="background-color: rgba(37, 99, 235, 0.04); border-color: rgba(37, 99, 235, 0.2) !important;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="match-badge {% if match.score >= 80 %}high{% elif match.score >= 60 %}medium{% else %}low{% endif %} fs-6 px-3 py-1">
+                <i class="fas fa-bullseye me-1"></i>{{ match.percentage }} Match
+              </span>
+              <span class="fw-bold small text-dark">Rule-Based Fit Analysis</span>
+            </div>
+            <span class="small text-muted d-none d-sm-inline">Matched with your Profile</span>
+          </div>
+
+          <ul class="mb-0 ps-3 small text-muted">
+            {% for reason in match.reasons %}
+            <li>{{ reason }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Description -->
+        <h5 class="fw-bold mb-3">About This Opportunity</h5>
+        <div class="text-secondary leading-relaxed mb-4" style="line-height: 1.7; white-space: pre-line;">
+          {{ opp.description }}
+        </div>
+
+        <!-- Eligibility -->
+        {% if opp.eligibility %}
+        <h5 class="fw-bold mb-2">Eligibility Criteria</h5>
+        <div class="p-3 bg-light rounded-3 border mb-4">
+          <p class="mb-0 small text-secondary">
+            <i class="fas fa-user-check text-success me-2"></i>{{ opp.eligibility }}
+          </p>
+        </div>
+        {% endif %}
+
+        <!-- Required Skills -->
+        <h5 class="fw-bold mb-2">Required Skills & Technologies</h5>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          {% for skill in opp.skills_list %}
+          <span class="skill-tag {% if skill in match.matched_skills %}matched{% endif %} fs-6 px-3 py-1">
+            {% if skill in match.matched_skills %}<i class="fas fa-check text-primary me-1"></i>{% endif %}{{ skill }}
+          </span>
+          {% endfor %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex flex-wrap gap-2 border-top pt-4">
+          <!-- External Apply Button -->
+          <a href="{{ opp.registration_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary px-4 py-2 fw-semibold rounded-pill shadow-sm">
+            <i class="fas fa-external-link-alt me-2"></i> Apply on Official Site
+          </a>
+
+          <!-- Track Application Modal Button -->
+          {% if current_user.is_authenticated %}
+          <button type="button" class="btn btn-outline-success px-3 py-2 fw-semibold rounded-pill" data-bs-toggle="modal" data-bs-target="#trackAppModal">
+            <i class="fas fa-tasks me-1"></i> 
+            {% if application %}
+              Tracked: {{ application.status }}
+            {% else %}
+              Track Application
+            {% endif %}
+          </button>
+          {% else %}
+          <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-outline-success px-3 py-2 fw-semibold rounded-pill">
+            <i class="fas fa-tasks me-1"></i> Log in to Track
+          </a>
+          {% endif %}
+
+          <!-- Bookmark Toggle -->
+          {% if current_user.is_authenticated %}
+          <button class="btn btn-outline-secondary btn-bookmark-action px-3 py-2 rounded-pill {% if is_bookmarked %}active{% endif %}" data-opp-id="{{ opp.id }}">
+            <i class="{% if is_bookmarked %}fas fa-bookmark text-danger{% else %}far fa-bookmark{% endif %} me-1"></i>
+            <span>{% if is_bookmarked %}Saved{% else %}Save{% endif %}</span>
+          </button>
+          {% endif %}
+
+          <!-- Share Button -->
+          <button class="btn btn-outline-secondary px-3 py-2 rounded-pill btn-copy-link" title="Copy link to clipboard">
+            <i class="fas fa-share-alt me-1"></i> Share
+          </button>
+
+          <!-- Report Button -->
+          {% if current_user.is_authenticated %}
+          <button class="btn btn-link text-muted small ms-auto text-decoration-none" data-bs-toggle="modal" data-bs-target="#reportModal">
+            <i class="fas fa-flag me-1"></i> Report
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Similar Opportunities Recommendations -->
+      {% if similar_opps %}
+      <div class="card hub-card p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-layer-group text-primary me-2"></i>Similar Opportunities You Might Like</h5>
+        <div class="row g-3">
+          {% for sim in similar_opps %}
+          <div class="col-md-4">
+            <div class="p-3 border rounded-3 h-100 bg-light d-flex flex-direction-column">
+              <span class="badge bg-{{ sim.category | cat_color }}-subtle text-{{ sim.category | cat_color }} mb-2" style="font-size: 0.7rem;">{{ sim.category }}</span>
+              <h6 class="fw-bold mb-1">
+                <a href="{{ url_for('student.opportunity_detail', id=sim.id) }}" class="text-dark text-decoration-none">{{ sim.title }}</a>
+              </h6>
+              <div class="small text-muted mb-2">{{ sim.organization }}</div>
+              <a href="{{ url_for('student.opportunity_detail', id=sim.id) }}" class="btn btn-outline-primary btn-sm mt-auto w-100">View</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Sidebar: Quick Facts & Org Info -->
+    <div class="col-lg-4">
+      <div class="card hub-card p-4 mb-4">
+        <h6 class="fw-bold mb-3 text-uppercase text-muted small">Key Information</h6>
+        
+        <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small">
+          <li class="d-flex justify-content-between align-items-center border-bottom pb-2">
+            <span class="text-muted"><i class="fas fa-folder me-2 text-primary"></i>Category:</span>
+            <span class="fw-semibold text-dark">{{ opp.category }}</span>
+          </li>
+          <li class="d-flex justify-content-between align-items-center border-bottom pb-2">
+            <span class="text-muted"><i class="fas fa-laptop-house me-2 text-primary"></i>Work Mode:</span>
+            <span class="fw-semibold text-dark">{{ opp.mode }}</span>
+          </li>
+          <li class="d-flex justify-content-between align-items-center border-bottom pb-2">
+            <span class="text-muted"><i class="fas fa-map-marker-alt me-2 text-primary"></i>Location:</span>
+            <span class="fw-semibold text-dark">{{ opp.location }}</span>
+          </li>
+          {% if opp.stipend %}
+          <li class="d-flex justify-content-between align-items-center border-bottom pb-2">
+            <span class="text-muted"><i class="fas fa-money-bill-wave me-2 text-success"></i>Stipend:</span>
+            <span class="fw-bold text-success">{{ opp.stipend }}</span>
+          </li>
+          {% endif %}
+          {% if opp.prize %}
+          <li class="d-flex justify-content-between align-items-center border-bottom pb-2">
+            <span class="text-muted"><i class="fas fa-trophy me-2 text-warning"></i>Prize Pool:</span>
+            <span class="fw-bold text-warning-emphasis">{{ opp.prize }}</span>
+          </li>
+          {% endif %}
+          <li class="d-flex justify-content-between align-items-center border-bottom pb-2">
+            <span class="text-muted"><i class="far fa-calendar-alt me-2 text-danger"></i>Application Deadline:</span>
+            <span class="fw-semibold text-danger">{{ opp.deadline.strftime('%b %d, %Y') if opp.deadline else 'Rolling' }}</span>
+          </li>
+          {% if opp.website %}
+          <li class="d-flex justify-content-between align-items-center border-bottom pb-2">
+            <span class="text-muted"><i class="fas fa-globe me-2 text-info"></i>Website:</span>
+            <a href="{{ opp.website }}" target="_blank" class="fw-semibold text-truncate" style="max-width: 150px;">{{ opp.website.replace('https://', '') }}</a>
+          </li>
+          {% endif %}
+          {% if opp.contact_email %}
+          <li class="d-flex justify-content-between align-items-center">
+            <span class="text-muted"><i class="fas fa-envelope me-2 text-secondary"></i>Contact:</span>
+            <span class="fw-semibold text-dark text-truncate" style="max-width: 160px;">{{ opp.contact_email }}</span>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <!-- Application Tracker Card Status -->
+      {% if application %}
+      <div class="card hub-card p-4 border-success-subtle bg-light">
+        <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle me-1"></i>You are tracking this opportunity</h6>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="small text-muted">Current Status:</span>
+          <span class="badge {{ application.status_badge_class() }} fs-6">{{ application.status }}</span>
+        </div>
+        {% if application.notes %}
+        <div class="small text-muted mt-2 border-top pt-2">
+          <strong>Notes:</strong> {{ application.notes }}
+        </div>
+        {% endif %}
+        <button class="btn btn-outline-success btn-sm w-100 mt-3" data-bs-toggle="modal" data-bs-target="#trackAppModal">
+          Update Tracking Notes / Status
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Track Application -->
+<div class="modal fade" id="trackAppModal" tabindex="-1" aria-labelledby="trackAppModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('student.applications') }}">
+        <input type="hidden" name="opportunity_id" value="{{ opp.id }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="trackAppModalLabel">Track Application Progress</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted">
+            Update where you stand with <strong>{{ opp.title }}</strong> to manage deadlines and interview pipelines.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Application Status</label>
+            <select class="form-select" name="status">
+              <option value="Interested" {% if application and application.status == 'Interested' %}selected{% endif %}>Interested (Planning to apply)</option>
+              <option value="Applied" {% if application and application.status == 'Applied' %}selected{% endif %}>Applied (Submitted application)</option>
+              <option value="Shortlisted" {% if application and application.status == 'Shortlisted' %}selected{% endif %}>Shortlisted (Assessment/Interview)</option>
+              <option value="Selected" {% if application and application.status == 'Selected' %}selected{% endif %}>Selected (Offer received!)</option>
+              <option value="Rejected" {% if application and application.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+              <option value="Completed" {% if application and application.status == 'Completed' %}selected{% endif %}>Completed</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Personal Notes</label>
+            <textarea class="form-control" name="notes" rows="3" placeholder="e.g. Submitted resume on May 4. Technical interview scheduled for next Thursday.">{{ application.notes if application else '' }}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm px-4">Save To Tracker</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Report Opportunity -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('student.report_opportunity', id=opp.id) }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="reportModalLabel">Report Opportunity</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Reason</label>
+            <select class="form-select" name="reason" required>
+              <option value="Expired deadline">Deadline has already passed</option>
+              <option value="Broken registration link">Broken or inaccessible registration link</option>
+              <option value="Misleading information">Inaccurate or misleading criteria</option>
+              <option value="Spam or fraudulent">Spam or fraudulent posting</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Additional Details</label>
+            <textarea class="form-control" name="details" rows="3" placeholder="Explain the issue so our admin team can verify..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

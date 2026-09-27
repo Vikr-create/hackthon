@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Register Student Profile | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card hub-card border-0 p-4 p-md-5">
+        
+        <div class="text-center mb-4">
+          <div class="brand-icon mx-auto mb-2" style="width: 44px; height: 44px; font-size: 1.3rem;">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <h3 class="fw-bold">Create Student Profile</h3>
+          <p class="text-muted small">Join thousands of students discovering opportunities tailored to their goals</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.register') }}">
+          <div class="mb-3">
+            <label for="full_name" class="form-label small fw-semibold">Full Name <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="fas fa-user"></i></span>
+              <input type="text" class="form-control border-start-0 ps-0" id="full_name" name="full_name" required placeholder="e.g. Aarav Sharma">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label small fw-semibold">Email Address <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="fas fa-envelope"></i></span>
+              <input type="email" class="form-control border-start-0 ps-0" id="email" name="email" required placeholder="e.g. student@college.edu">
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label for="college" class="form-label small fw-semibold">College / University</label>
+              <input type="text" class="form-control" id="college" name="college" placeholder="e.g. IIT, NIT, State Univ">
+            </div>
+            <div class="col-md-6">
+              <label for="branch" class="form-label small fw-semibold">Branch / Department</label>
+              <input type="text" class="form-control" id="branch" name="branch" placeholder="e.g. Computer Science, IT, ECE">
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label for="password" class="form-label small fw-semibold">Password <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="password" class="form-control border-end-0" id="password" name="password" required placeholder="Min 6 characters">
+                <button class="btn btn-outline-secondary border-start-0 toggle-password-btn" type="button" data-target="password">
+                  <i class="fas fa-eye text-muted"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="confirm_password" class="form-label small fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="password" class="form-control border-end-0" id="confirm_password" name="confirm_password" required placeholder="Repeat password">
+                <button class="btn btn-outline-secondary border-start-0 toggle-password-btn" type="button" data-target="confirm_password">
+                  <i class="fas fa-eye text-muted"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4 form-check">
+            <input type="checkbox" class="form-check-input" id="terms" required checked>
+            <label class="form-check-label small text-muted" for="terms">
+              I agree to the OpportunityHub Student Terms & Privacy Policy
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">
+            Create Free Account <i class="fas fa-arrow-right ms-1"></i>
+          </button>
+        </form>
+
+        <hr class="my-4 text-muted">
+
+        <div class="text-center small text-muted">
+          Already registered? 
+          <a href="{{ url_for('auth.login') }}" class="text-primary fw-semibold text-decoration-none">Sign In Here</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

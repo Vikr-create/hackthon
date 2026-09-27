@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Welcome Banner & Profile Meter -->
+  <div class="card hub-card border-0 p-4 mb-4 text-white" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-8">
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div class="rounded-circle bg-white text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; font-size: 1.35rem;">
+            {{ profile.full_name[:1] if profile and profile.full_name else 'S' }}
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0">Welcome back, {{ profile.full_name if profile and profile.full_name else 'Student' }}!</h3>
+            <span class="small text-white-50">
+              <i class="fas fa-university me-1"></i>{{ profile.college or 'College not set' }} &bull; {{ profile.branch or 'Branch not set' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Profile Completion Meter -->
+        <div class="mt-3" style="max-width: 550px;">
+          <div class="d-flex justify-content-between small text-white-50 mb-1">
+            <span>Profile Completion</span>
+            <span class="fw-bold text-white">{{ completion_percentage }}%</span>
+          </div>
+          <div class="progress" style="height: 8px; background-color: rgba(255,255,255,0.25);">
+            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ completion_percentage }}%;" aria-valuenow="{{ completion_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          {% if completion_percentage < 80 %}
+          <div class="small mt-2 text-white-50">
+            <i class="fas fa-info-circle me-1"></i> Complete your profile details and skills to maximize recommendation accuracy.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-lg-4 text-lg-end">
+        <a href="{{ url_for('student.profile') }}" class="btn btn-light fw-semibold text-primary px-4 py-2 shadow-sm rounded-pill">
+          <i class="fas fa-user-edit me-1"></i> Edit Profile
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Stat Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card hub-card p-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small fw-semibold">Saved Opportunities</div>
+            <h3 class="fw-bold mb-0 text-primary" id="user-bookmark-count">{{ bookmarked_opps | length }}</h3>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-4">
+            <i class="fas fa-bookmark"></i>
+          </div>
+        </div>
+        <a href="{{ url_for('student.bookmarks') }}" class="small text-primary text-decoration-none mt-2 d-inline-block">View Saved &rarr;</a>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card hub-card p-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small fw-semibold">Applications Tracked</div>
+            <h3 class="fw-bold mb-0 text-success">{{ app_stats.total }}</h3>
+          </div>
+          <div class="p-3 bg-success-subtle text-success rounded-3 fs-4">
+            <i class="fas fa-file-signature"></i>
+          </div>
+        </div>
+        <a href="{{ url_for('student.applications') }}" class="small text-success text-decoration-none mt-2 d-inline-block">Track Progress &rarr;</a>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card hub-card p-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small fw-semibold">Upcoming Deadlines</div>
+            <h3 class="fw-bold mb-0 text-danger">{{ upcoming_deadlines | length }}</h3>
+          </div>
+          <div class="p-3 bg-danger-subtle text-danger rounded-3 fs-4">
+            <i class="fas fa-hourglass-half"></i>
+          </div>
+        </div>
+        <a href="{{ url_for('student.deadlines') }}" class="small text-danger text-decoration-none mt-2 d-inline-block">Check Dates &rarr;</a>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card hub-card p-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small fw-semibold">Top Recommendation</div>
+            <h3 class="fw-bold mb-0 text-info">
+              {% if recommendations and recommendations | length > 0 %}
+                {{ recommendations[0].match.percentage }}
+              {% else %}
+                85%
+              {% endif %}
+            </h3>
+          </div>
+          <div class="p-3 bg-info-subtle text-info rounded-3 fs-4">
+            <i class="fas fa-bullseye"></i>
+          </div>
+        </div>
+        <a href="{{ url_for('student.recommendations') }}" class="small text-info text-decoration-none mt-2 d-inline-block">See All &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hackathon Presentation Card: Why OpportunityHub? -->
+  <div class="card hub-card p-4 mb-4 border-primary-subtle bg-light">
+    <div class="row align-items-center g-3">
+      <div class="col-md-8">
+        <span class="badge bg-primary px-3 py-1 mb-2">T-FEST / FIT-FEST 2026 Core Value</span>
+        <h5 class="fw-bold mb-1">Why OpportunityHub?</h5>
+        <p class="text-muted small mb-0">
+          <strong>One Platform &rarr; Multiple Opportunities &rarr; Personalized Discovery</strong><br>
+          We replace fragmented WhatsApp, Telegram, and job boards with a single deterministic matching engine that maps your specific skills, branch, and preferences to live opportunities.
+        </p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <div class="d-inline-flex gap-2 text-center">
+          <div class="p-2 px-3 bg-white rounded border">
+            <span class="d-block fw-bold text-primary">70+</span>
+            <span class="small text-muted" style="font-size: 0.7rem;">Opportunities</span>
+          </div>
+          <div class="p-2 px-3 bg-white rounded border">
+            <span class="d-block fw-bold text-success">15+</span>
+            <span class="small text-muted" style="font-size: 0.7rem;">Categories</span>
+          </div>
+          <div class="p-2 px-3 bg-white rounded border">
+            <span class="d-block fw-bold text-info">24/7</span>
+            <span class="small text-muted" style="font-size: 0.7rem;">Discovery</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Left Column: Top Recommendations -->
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">
+          <i class="fas fa-sparkles text-warning me-1"></i> Personalized Recommendations
+        </h5>
+        <a href="{{ url_for('student.recommendations') }}" class="btn btn-outline-primary btn-sm">
+          All Matches <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+      </div>
+
+      <div class="row g-3">
+        {% for rec in recommendations %}
+        {% set opp = rec.opportunity %}
+        {% set match = rec.match %}
+        <div class="col-md-6">
+          <div class="card hub-card opp-card h-100">
+            <div class="opp-card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-{{ opp.category | cat_color }}-subtle text-{{ opp.category | cat_color }} badge-category">
+                  {{ opp.category }}
+                </span>
+                <span class="match-badge {% if match.score >= 80 %}high{% elif match.score >= 60 %}medium{% else %}low{% endif %}">
+                  <i class="fas fa-check-circle"></i> {{ match.percentage }} Match
+                </span>
+              </div>
+
+              <h6 class="opp-card-title mt-1">
+                <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}">{{ opp.title }}</a>
+              </h6>
+              <div class="opp-card-org">
+                <i class="fas fa-building me-1"></i>{{ opp.organization }}
+              </div>
+
+              <div class="small text-muted mb-2">
+                <i class="fas fa-map-marker-alt me-1"></i>{{ opp.location }} &bull; {{ opp.mode }}
+              </div>
+
+              <!-- Matched reasons -->
+              <div class="p-2 bg-light rounded border small mb-3">
+                <span class="text-success fw-semibold"><i class="fas fa-check me-1"></i>Why it matches:</span>
+                <ul class="mb-0 ps-3 text-muted" style="font-size: 0.75rem;">
+                  {% for reason in match.reasons[:2] %}
+                  <li>{{ reason }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                {% if opp.deadline %}
+                <span class="small text-danger fw-semibold">
+                  <i class="far fa-clock me-1"></i>{{ opp.deadline_badge_text() }}
+                </span>
+                {% else %}
+                <span class="small text-muted">Rolling Admission</span>
+                {% endif %}
+                <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                  Details
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Application Tracker Summary Pipeline -->
+      <div class="card hub-card p-4 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="fas fa-stream text-primary me-2"></i>Application Tracker Status</h5>
+          <a href="{{ url_for('student.applications') }}" class="btn btn-sm btn-outline-secondary">Manage Applications</a>
+        </div>
+        <div class="row g-2 text-center">
+          <div class="col-4 col-md-2">
+            <div class="p-2 bg-light rounded border">
+              <span class="small text-muted d-block">Interested</span>
+              <strong class="fs-5">{{ app_stats.Interested }}</strong>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="p-2 bg-primary-subtle text-primary rounded border border-primary-subtle">
+              <span class="small d-block">Applied</span>
+              <strong class="fs-5">{{ app_stats.Applied }}</strong>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="p-2 bg-warning-subtle text-warning-emphasis rounded border border-warning-subtle">
+              <span class="small d-block">Shortlisted</span>
+              <strong class="fs-5">{{ app_stats.Shortlisted }}</strong>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="p-2 bg-success-subtle text-success rounded border border-success-subtle">
+              <span class="small d-block">Selected</span>
+              <strong class="fs-5">{{ app_stats.Selected }}</strong>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="p-2 bg-danger-subtle text-danger rounded border border-danger-subtle">
+              <span class="small d-block">Rejected</span>
+              <strong class="fs-5">{{ app_stats.Rejected }}</strong>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="p-2 bg-dark-subtle text-dark rounded border border-dark-subtle">
+              <span class="small d-block">Completed</span>
+              <strong class="fs-5">{{ app_stats.Completed }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Deadlines & Saved -->
+    <div class="col-lg-4">
+      <!-- Upcoming Deadlines -->
+      <div class="card hub-card p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fas fa-hourglass-start text-danger me-2"></i>Urgent Deadlines</h6>
+          <a href="{{ url_for('student.deadlines') }}" class="small text-muted">View all</a>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for opp in upcoming_deadlines %}
+          <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="list-group-item list-group-item-action px-0 py-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">{{ opp.deadline_badge_text() }}</span>
+              <span class="small text-muted">{{ opp.category }}</span>
+            </div>
+            <div class="fw-semibold text-truncate mt-1 text-dark">{{ opp.title }}</div>
+            <div class="small text-muted">{{ opp.organization }}</div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Saved Bookmarks Quick Preview -->
+      <div class="card hub-card p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fas fa-bookmark text-primary me-2"></i>Bookmarked</h6>
+          <a href="{{ url_for('student.bookmarks') }}" class="small text-muted">View all ({{ bookmarked_opps | length }})</a>
+        </div>
+        {% if bookmarked_opps and bookmarked_opps | length > 0 %}
+        <div class="list-group list-group-flush">
+          {% for opp in bookmarked_opps %}
+          <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="list-group-item list-group-item-action px-0 py-2">
+            <div class="fw-semibold text-truncate text-dark">{{ opp.title }}</div>
+            <div class="small text-muted d-flex justify-content-between">
+              <span>{{ opp.organization }}</span>
+              <span class="text-primary">{{ opp.category }}</span>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted small">
+          <i class="far fa-bookmark fs-3 mb-2 d-block text-secondary"></i>
+          No saved opportunities yet.<br>
+          <a href="{{ url_for('student.opportunities') }}" class="text-primary fw-semibold">Explore opportunities</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Trending Section -->
+      <div class="card hub-card p-3">
+        <h6 class="fw-bold mb-3"><i class="fas fa-fire text-warning me-2"></i>Trending Right Now</h6>
+        <div class="list-group list-group-flush">
+          {% for opp in trending %}
+          <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="list-group-item list-group-item-action px-0 py-2">
+            <div class="fw-semibold text-truncate text-dark">{{ opp.title }}</div>
+            <div class="small text-muted d-flex justify-content-between">
+              <span><i class="fas fa-eye me-1"></i>{{ opp.views_count }} views</span>
+              <span class="badge bg-light text-dark border">{{ opp.mode }}</span>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

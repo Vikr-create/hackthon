@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Deadline Tracker | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="fas fa-calendar-alt text-danger me-2"></i>Opportunity Deadline Tracker</h3>
+      <p class="text-muted small mb-0">Never miss an application deadline. Categorized by urgency and countdowns.</p>
+    </div>
+  </div>
+
+  <!-- Urgent Deadlines (< 3 Days) -->
+  <div class="mb-5">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span class="badge bg-danger fs-6 px-3 py-1">URGENT</span>
+      <h5 class="fw-bold mb-0 text-danger">Closing Within 3 Days</h5>
+    </div>
+
+    {% if urgent and urgent | length > 0 %}
+    <div class="row g-3">
+      {% for opp in urgent %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card hub-card border-danger-subtle p-3 h-100" style="background-color: #fffaf9;">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-danger-subtle text-danger">{{ opp.category }}</span>
+            <span class="badge bg-danger text-white fs-6">
+              <i class="fas fa-hourglass-half me-1"></i>{{ opp.deadline_badge_text() }}
+            </span>
+          </div>
+          <h5 class="fw-bold mb-1">
+            <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="text-dark text-decoration-none">
+              {{ opp.title }}
+            </a>
+          </h5>
+          <div class="text-muted small mb-3"><i class="fas fa-building me-1"></i>{{ opp.organization }}</div>
+          <div class="small text-danger fw-semibold mb-3">
+            <i class="far fa-calendar-times me-1"></i>Final Deadline: {{ opp.deadline.strftime('%A, %B %d, %Y') }}
+          </div>
+          <div class="d-flex gap-2 mt-auto">
+            <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="btn btn-outline-danger btn-sm flex-fill">View Details</a>
+            <a href="{{ opp.registration_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-danger btn-sm flex-fill fw-bold">Apply Now &rarr;</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-3 bg-light rounded-3 text-muted small border">
+      <i class="fas fa-check-circle text-success me-1"></i> No opportunities expiring in the next 3 days.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Closing in Next 2 Weeks -->
+  <div class="mb-5">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span class="badge bg-warning text-dark fs-6 px-3 py-1">SOON</span>
+      <h5 class="fw-bold mb-0 text-warning-emphasis">Closing in 4 to 14 Days</h5>
+    </div>
+
+    {% if soon and soon | length > 0 %}
+    <div class="row g-3">
+      {% for opp in soon %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card hub-card border-warning-subtle p-3 h-100">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-warning-subtle text-warning-emphasis">{{ opp.category }}</span>
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">
+              {{ opp.deadline_badge_text() }}
+            </span>
+          </div>
+          <h5 class="fw-bold mb-1">
+            <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="text-dark text-decoration-none">
+              {{ opp.title }}
+            </a>
+          </h5>
+          <div class="text-muted small mb-3"><i class="fas fa-building me-1"></i>{{ opp.organization }}</div>
+          <div class="small text-muted mb-3">
+            <i class="far fa-calendar me-1 text-primary"></i>Deadline: {{ opp.deadline.strftime('%b %d, %Y') }}
+          </div>
+          <div class="d-flex gap-2 mt-auto">
+            <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="btn btn-outline-primary btn-sm flex-fill">Details</a>
+            <a href="{{ opp.registration_link }}" target="_blank" class="btn btn-primary btn-sm flex-fill">Apply</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-3 bg-light rounded-3 text-muted small border">No opportunities in this window.</div>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming Deadlines (> 14 Days) -->
+  <div class="mb-5">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span class="badge bg-primary fs-6 px-3 py-1">UPCOMING</span>
+      <h5 class="fw-bold mb-0 text-primary">More than 2 Weeks Remaining</h5>
+    </div>
+
+    <div class="row g-3">
+      {% for opp in later %}
+      <div class="col-md-6 col-lg-3">
+        <div class="card hub-card p-3 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-light text-dark border">{{ opp.category }}</span>
+            <span class="small text-primary fw-semibold">{{ opp.deadline_badge_text() }}</span>
+          </div>
+          <h6 class="fw-bold mb-1">
+            <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="text-dark text-decoration-none">{{ opp.title }}</a>
+          </h6>
+          <div class="small text-muted mb-2">{{ opp.organization }}</div>
+          <div class="small text-muted mt-auto pt-2 border-top">
+            Due: {{ opp.deadline.strftime('%b %d, %Y') }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Expired Opportunities Archive -->
+  {% if expired and expired | length > 0 %}
+  <div class="border-top pt-4">
+    <h6 class="text-muted fw-bold mb-3"><i class="fas fa-archive me-1"></i>Recently Expired Opportunities</h6>
+    <div class="row g-2">
+      {% for opp in expired %}
+      <div class="col-md-6 col-lg-4">
+        <div class="p-2 bg-light rounded border small d-flex justify-content-between align-items-center">
+          <span class="text-truncate me-2 text-muted">{{ opp.title }} ({{ opp.organization }})</span>
+          <span class="badge bg-secondary">Closed</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

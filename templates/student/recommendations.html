@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Personalized Recommendations | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="card hub-card p-4 mb-4 border-0" style="background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white;">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-8">
+        <div class="badge bg-success px-3 py-1 mb-2">Rule-Based Intelligent Engine</div>
+        <h3 class="fw-bold mb-1">Personalized Recommendations</h3>
+        <p class="text-white-50 small mb-0">
+          Ranked using multi-factor comparison against your profile's declared skills ({{ profile.skills | length }} added), academic branch ({{ profile.branch or 'General' }}), and career preferences.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end">
+        <a href="{{ url_for('student.profile') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+          <i class="fas fa-sliders-h me-1"></i> Adjust Skills & Preferences
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations List -->
+  {% if recommended_list and recommended_list | length > 0 %}
+  <div class="row g-4">
+    {% for rec in recommended_list %}
+    {% set opp = rec.opportunity %}
+    {% set match = rec.match %}
+    {% set is_bookmarked = opp.id in bookmarked_ids %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card hub-card opp-card h-100">
+        <div class="opp-card-body">
+          
+          <!-- Top Row: Category + Match % -->
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-{{ opp.category | cat_color }}-subtle text-{{ opp.category | cat_color }} badge-category">
+              <i class="{{ opp.category | cat_icon }} me-1"></i>{{ opp.category }}
+            </span>
+            <span class="match-badge {% if match.score >= 80 %}high{% elif match.score >= 60 %}medium{% else %}low{% endif %} fs-6">
+              <i class="fas fa-check-circle"></i> {{ match.percentage }} Match
+            </span>
+          </div>
+
+          <!-- Title & Organization -->
+          <h5 class="opp-card-title mt-2">
+            <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}">{{ opp.title }}</a>
+          </h5>
+          <div class="opp-card-org">
+            <i class="fas fa-building me-1"></i>{{ opp.organization }}
+          </div>
+
+          <!-- Meta -->
+          <div class="opp-card-meta">
+            <span class="opp-card-meta-item"><i class="fas fa-map-marker-alt"></i>{{ opp.location }}</span>
+            <span class="opp-card-meta-item"><i class="fas fa-laptop-house"></i>{{ opp.mode }}</span>
+            {% if opp.stipend %}
+            <span class="opp-card-meta-item text-success fw-semibold"><i class="fas fa-money-bill-wave"></i>{{ opp.stipend }}</span>
+            {% elif opp.prize %}
+            <span class="opp-card-meta-item text-warning-emphasis fw-semibold"><i class="fas fa-trophy"></i>{{ opp.prize }}</span>
+            {% endif %}
+          </div>
+
+          <!-- Rule-based Match Breakdown Box -->
+          <div class="p-3 bg-light rounded-3 border small mb-3">
+            <span class="fw-semibold text-primary d-block mb-1">
+              <i class="fas fa-calculator me-1"></i>Match Breakdown:
+            </span>
+            <ul class="mb-0 ps-3 text-muted" style="font-size: 0.78rem;">
+              {% for reason in match.reasons %}
+              <li>{{ reason }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- Required Skills -->
+          <div class="opp-card-skills mt-auto">
+            {% for skill in opp.skills_list %}
+            <span class="skill-tag {% if skill in match.matched_skills %}matched{% endif %}">
+              {{ skill }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="opp-card-footer">
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-bookmark btn-bookmark-action {% if is_bookmarked %}active{% endif %}" data-opp-id="{{ opp.id }}" title="Bookmark Opportunity">
+              <i class="{% if is_bookmarked %}fas fa-bookmark text-danger{% else %}far fa-bookmark{% endif %}"></i>
+            </button>
+            {% if opp.deadline %}
+            <span class="deadline-badge {% if opp.days_remaining() <= 3 %}deadline-urgent{% else %}deadline-soon{% endif %}">
+              {{ opp.deadline_badge_text() }}
+            </span>
+            {% endif %}
+          </div>
+          <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="btn btn-primary btn-sm rounded-pill px-3">
+            View Details <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card hub-card p-5 text-center my-4">
+    <div class="p-3 bg-light rounded-circle d-inline-block mx-auto mb-3" style="width: 70px; height: 70px;">
+      <i class="fas fa-bullseye fs-2 text-muted"></i>
+    </div>
+    <h5 class="fw-bold">No High-Match Recommendations Yet</h5>
+    <p class="text-muted small" style="max-width: 450px; margin: 0 auto;">
+      Add your technical skills, branch of study, and career interests in your profile to power our rule-based matching engine.
+    </p>
+    <div class="mt-3">
+      <a href="{{ url_for('student.profile') }}" class="btn btn-primary btn-sm px-4 rounded-pill">
+        Complete Profile Now
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

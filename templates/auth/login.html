@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Login | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+      <div class="card hub-card border-0 p-4 p-md-5">
+        
+        <!-- Header -->
+        <div class="text-center mb-4">
+          <div class="brand-icon mx-auto mb-2" style="width: 44px; height: 44px; font-size: 1.3rem;">
+            <i class="fas fa-lock"></i>
+          </div>
+          <h3 class="fw-bold">Welcome Back</h3>
+          <p class="text-muted small">Sign in to your OpportunityHub account</p>
+        </div>
+
+        <!-- Quick Demo Accounts One-Click Fill -->
+        <div class="p-3 bg-light rounded-3 border mb-4">
+          <div class="small fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem;">
+            <i class="fas fa-bolt text-warning me-1"></i> Quick Demo Access (Hackathon Testing)
+          </div>
+          <div class="d-grid gap-2 d-sm-flex">
+            <button type="button" id="fill-student-btn" class="btn btn-outline-primary btn-sm flex-fill">
+              <i class="fas fa-user-graduate me-1"></i> Demo Student
+            </button>
+            <button type="button" id="fill-admin-btn" class="btn btn-outline-danger btn-sm flex-fill">
+              <i class="fas fa-user-shield me-1"></i> Demo Admin
+            </button>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+          <div class="mb-3">
+            <label for="email" class="form-label small fw-semibold">Email Address</label>
+            <div class="input-group">
+              <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="fas fa-envelope"></i></span>
+              <input type="email" class="form-control border-start-0 ps-0" id="email" name="email" required placeholder="name@example.com">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <label for="password" class="form-label small fw-semibold">Password</label>
+            </div>
+            <div class="input-group">
+              <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="fas fa-key"></i></span>
+              <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="password" name="password" required placeholder="••••••••">
+              <button class="btn btn-outline-secondary border-start-0 toggle-password-btn" type="button" data-target="password">
+                <i class="fas fa-eye text-muted"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-3 form-check d-flex justify-content-between align-items-center">
+            <div>
+              <input type="checkbox" class="form-check-input" id="remember" name="remember" checked>
+              <label class="form-check-label small text-muted" for="remember">Remember me</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">
+            Sign In <i class="fas fa-arrow-right ms-1"></i>
+          </button>
+        </form>
+
+        <hr class="my-4 text-muted">
+
+        <div class="text-center small text-muted">
+          Don't have an account yet? 
+          <a href="{{ url_for('auth.register') }}" class="text-primary fw-semibold text-decoration-none">Create Student Profile</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById('fill-student-btn').addEventListener('click', function() {
+    document.getElementById('email').value = 'student@example.com';
+    document.getElementById('password').value = 'Student@123';
+  });
+
+  document.getElementById('fill-admin-btn').addEventListener('click', function() {
+    document.getElementById('email').value = 'admin@example.com';
+    document.getElementById('password').value = 'Admin@123';
+  });
+</script>
+{% endblock %}

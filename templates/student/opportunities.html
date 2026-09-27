@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Discover Opportunities | {{ BRAND_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header & Live Search Bar -->
+  <div class="card hub-card p-4 mb-4 border-0" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white;">
+    <div class="row align-items-center g-3">
+      <div class="col-md-6">
+        <h3 class="fw-bold mb-1">Discover Opportunities</h3>
+        <p class="mb-0 text-white-50 small">Filter through 70+ verified internships, hackathons, and scholarships.</p>
+      </div>
+      <div class="col-md-6">
+        <form action="{{ url_for('student.opportunities') }}" method="GET" class="d-flex bg-white rounded-pill p-1 shadow">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control border-0 rounded-pill shadow-none px-3" placeholder="Search title, skills, organization, city..." autocomplete="off">
+          <!-- Hidden inputs to retain active filters -->
+          {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+          {% if selected_mode %}<input type="hidden" name="mode" value="{{ selected_mode }}">{% endif %}
+          {% if selected_sort %}<input type="hidden" name="sort" value="{{ selected_sort }}">{% endif %}
+          <button type="submit" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-search"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Filters Sidebar -->
+    <div class="col-lg-3">
+      <div class="card hub-card p-3 sticky-top" style="top: 85px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fas fa-filter text-primary me-2"></i>Filters</h6>
+          <a href="{{ url_for('student.opportunities') }}" class="small text-danger text-decoration-none">
+            <i class="fas fa-undo me-1"></i>Reset
+          </a>
+        </div>
+
+        <form action="{{ url_for('student.opportunities') }}" method="GET">
+          {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+
+          <!-- Category Filter -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-uppercase text-muted">Category</label>
+            <select class="form-select form-select-sm" name="category" onchange="this.form.submit()">
+              <option value="All" {% if not selected_category or selected_category == 'All' %}selected{% endif %}>All Categories</option>
+              {% for cat in categories %}
+              <option value="{{ cat.name }}" {% if selected_category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Work Mode -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-uppercase text-muted">Mode</label>
+            <select class="form-select form-select-sm" name="mode" onchange="this.form.submit()">
+              <option value="All" {% if not selected_mode or selected_mode == 'All' %}selected{% endif %}>All Modes</option>
+              <option value="Online" {% if selected_mode == 'Online' %}selected{% endif %}>Online / Remote</option>
+              <option value="Offline" {% if selected_mode == 'Offline' %}selected{% endif %}>Offline / On-site</option>
+              <option value="Hybrid" {% if selected_mode == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+            </select>
+          </div>
+
+          <!-- Paid / Free Filter -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-uppercase text-muted">Compensation</label>
+            <select class="form-select form-select-sm" name="is_paid" onchange="this.form.submit()">
+              <option value="" {% if not is_paid %}selected{% endif %}>All (Paid & Free)</option>
+              <option value="1" {% if is_paid == '1' %}selected{% endif %}>Paid / Stipend / Grants</option>
+              <option value="0" {% if is_paid == '0' %}selected{% endif %}>Free to Participate</option>
+            </select>
+          </div>
+
+          <!-- Location Filter -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-uppercase text-muted">Location / City</label>
+            <input type="text" class="form-control form-control-sm" name="location" value="{{ location_filter or '' }}" placeholder="e.g. Bengaluru, Mumbai, Remote">
+          </div>
+
+          <!-- Checkbox Toggles -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-uppercase text-muted">Special Tags</label>
+            <div class="form-check small mb-1">
+              <input class="form-check-input" type="checkbox" name="beginner_friendly" value="1" id="filter_beginner" {% if beginner == '1' %}checked{% endif %} onchange="this.form.submit()">
+              <label class="form-check-label" for="filter_beginner">Beginner Friendly</label>
+            </div>
+            <div class="form-check small mb-1">
+              <input class="form-check-input" type="checkbox" name="featured" value="1" id="filter_featured" {% if featured == '1' %}checked{% endif %} onchange="this.form.submit()">
+              <label class="form-check-label" for="filter_featured">Featured Only</label>
+            </div>
+            <div class="form-check small">
+              <input class="form-check-input" type="checkbox" name="verified" value="1" id="filter_verified" {% if verified == '1' %}checked{% endif %} onchange="this.form.submit()">
+              <label class="form-check-label" for="filter_verified">Verified Orgs Only</label>
+            </div>
+          </div>
+
+          <!-- Retain Sort -->
+          <input type="hidden" name="sort" value="{{ selected_sort }}">
+
+          <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">
+            Apply Filters
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Column: Opportunity Results Grid -->
+    <div class="col-lg-9">
+      <!-- Controls Bar: Results count & Sort -->
+      <div class="card hub-card p-3 mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+          <div class="small text-muted">
+            Showing <strong class="text-dark">{{ opp_cards | length }}</strong> of <strong class="text-dark">{{ total_count }}</strong> opportunities
+            {% if search_query %} for "<strong class="text-primary">{{ search_query }}</strong>"{% endif %}
+            {% if selected_category and selected_category != 'All' %} in <span class="badge bg-secondary">{{ selected_category }}</span>{% endif %}
+          </div>
+
+          <!-- Sorting Dropdown -->
+          <form action="{{ url_for('student.opportunities') }}" method="GET" class="d-flex align-items-center gap-2">
+            {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+            {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+            {% if selected_mode %}<input type="hidden" name="mode" value="{{ selected_mode }}">{% endif %}
+            {% if is_paid %}<input type="hidden" name="is_paid" value="{{ is_paid }}">{% endif %}
+            <span class="small text-muted text-nowrap">Sort By:</span>
+            <select class="form-select form-select-sm" name="sort" onchange="this.form.submit()" style="min-width: 160px;">
+              <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest Added</option>
+              <option value="deadline" {% if selected_sort == 'deadline' %}selected{% endif %}>Deadline (Urgent First)</option>
+              <option value="popular" {% if selected_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+              <option value="stipend_high" {% if selected_sort == 'stipend_high' %}selected{% endif %}>Highest Stipend</option>
+              <option value="title_asc" {% if selected_sort == 'title_asc' %}selected{% endif %}>Title (A-Z)</option>
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <!-- Opportunities Grid -->
+      {% if opp_cards and opp_cards | length > 0 %}
+      <div class="row g-3">
+        {% for item in opp_cards %}
+        {% set opp = item.opp %}
+        {% set match = item.match %}
+        {% set is_bookmarked = item.is_bookmarked %}
+        <div class="col-md-6 col-xl-4">
+          <div class="card hub-card opp-card h-100">
+            <div class="opp-card-body">
+              <!-- Category Badge & Match Badge -->
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-{{ opp.category | cat_color }}-subtle text-{{ opp.category | cat_color }} badge-category">
+                  <i class="{{ opp.category | cat_icon }} me-1"></i>{{ opp.category }}
+                </span>
+                <span class="match-badge {% if match.score >= 80 %}high{% elif match.score >= 60 %}medium{% else %}low{% endif %}" title="Calculated based on your skills, branch, and preferences">
+                  <i class="fas fa-check-circle"></i> {{ match.percentage }}
+                </span>
+              </div>
+
+              <!-- Title & Organization -->
+              <h6 class="opp-card-title mt-1">
+                <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}">{{ opp.title }}</a>
+              </h6>
+              <div class="opp-card-org">
+                <i class="fas fa-building me-1"></i>{{ opp.organization }}
+                {% if opp.verified %}<i class="fas fa-check-circle text-primary ms-1" title="Verified"></i>{% endif %}
+              </div>
+
+              <!-- Meta details -->
+              <div class="opp-card-meta">
+                <span class="opp-card-meta-item"><i class="fas fa-map-marker-alt"></i>{{ opp.location }}</span>
+                <span class="opp-card-meta-item"><i class="fas fa-laptop-house"></i>{{ opp.mode }}</span>
+                {% if opp.stipend %}
+                <span class="opp-card-meta-item text-success fw-semibold"><i class="fas fa-money-bill-wave"></i>{{ opp.stipend }}</span>
+                {% elif opp.prize %}
+                <span class="opp-card-meta-item text-warning-emphasis fw-semibold"><i class="fas fa-trophy"></i>{{ opp.prize }}</span>
+                {% endif %}
+              </div>
+
+              <!-- Required Skills Tags -->
+              <div class="opp-card-skills mt-auto">
+                {% for skill in opp.skills_list[:3] %}
+                <span class="skill-tag {% if skill in match.matched_skills %}matched{% endif %}">
+                  {{ skill }}
+                </span>
+                {% endfor %}
+                {% if opp.skills_list | length > 3 %}
+                <span class="skill-tag">+{{ (opp.skills_list | length) - 3 }}</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Footer: Bookmark + Details -->
+            <div class="opp-card-footer">
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-bookmark btn-bookmark-action {% if is_bookmarked %}active{% endif %}" data-opp-id="{{ opp.id }}" title="Bookmark Opportunity">
+                  <i class="{% if is_bookmarked %}fas fa-bookmark text-danger{% else %}far fa-bookmark{% endif %}"></i>
+                </button>
+                {% if opp.deadline %}
+                  {% set days = opp.days_remaining() %}
+                  <span class="deadline-badge {% if days < 0 %}deadline-expired{% elif days <= 3 %}deadline-urgent{% elif days <= 14 %}deadline-soon{% else %}deadline-upcoming{% endif %}">
+                    {{ opp.deadline_badge_text() }}
+                  </span>
+                {% endif %}
+              </div>
+              <a href="{{ url_for('student.opportunity_detail', id=opp.id) }}" class="btn btn-primary btn-sm rounded-pill px-3">
+                Details <i class="fas fa-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if pagination and pagination.pages > 1 %}
+      <nav class="mt-4" aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+          {% if pagination.has_prev %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('student.opportunities', page=pagination.prev_num, q=search_query, category=selected_category, mode=selected_mode, sort=selected_sort, is_paid=is_paid) }}">Previous</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+
+          {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+              {% if p == pagination.page %}
+              <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+              {% else %}
+              <li class="page-item"><a class="page-link" href="{{ url_for('student.opportunities', page=p, q=search_query, category=selected_category, mode=selected_mode, sort=selected_sort, is_paid=is_paid) }}">{{ p }}</a></li>
+              {% endif %}
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if pagination.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('student.opportunities', page=pagination.next_num, q=search_query, category=selected_category, mode=selected_mode, sort=selected_sort, is_paid=is_paid) }}">Next</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <!-- Empty State -->
+      <div class="card hub-card p-5 text-center my-4">
+        <div class="p-3 bg-light rounded-circle d-inline-block mx-auto mb-3" style="width: 70px; height: 70px;">
+          <i class="fas fa-search fs-2 text-muted"></i>
+        </div>
+        <h5 class="fw-bold">No Opportunities Found</h5>
+        <p class="text-muted small" style="max-width: 450px; margin: 0 auto;">
+          We couldn't find any opportunities matching your specific search query or active filters. Try clearing some filters or searching for broader terms like "Python", "Remote", or "Hackathon".
+        </p>
+        <div class="mt-3">
+          <a href="{{ url_for('student.opportunities') }}" class="btn btn-outline-primary btn-sm px-4">
+            Clear All Filters
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}
